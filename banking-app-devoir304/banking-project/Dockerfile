@@ -1,11 +1,15 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 
 WORKDIR /app
-COPY . .
 
-RUN mvn clean package -DskipTests
+# Optimisation : cache des dépendances Maven
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
 
-FROM eclipse-temurin:21-jdk
+COPY src ./src
+RUN mvn clean package -DskipTests -B
+
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
@@ -13,4 +17,4 @@ COPY --from=build /app/target/banking-app-1.0.0.jar app.jar
 
 EXPOSE 8081
 
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
